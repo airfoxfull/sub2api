@@ -25,14 +25,14 @@ jobs:
         run: |
           git remote add upstream https://github.com/Wei-Shaw/sub2api.git
           git fetch upstream main
-          CURRENT_SHA="$(git rev-parse origin/main)"
+          CURRENT_SHA="$(git rev-parse HEAD)"
           UPSTREAM_SHA="$(git rev-parse upstream/main)"
           echo "current=$CURRENT_SHA"
           echo "upstream=$UPSTREAM_SHA"
-          if [ "$CURRENT_SHA" = "$UPSTREAM_SHA" ]; then
-            echo "Fork already matches upstream main."
+          if git merge-base --is-ancestor "$UPSTREAM_SHA" "$CURRENT_SHA"; then
+            echo "Fork already contains upstream main."
             exit 0
           fi
           git checkout main
-          git reset --hard upstream/main
-          git push origin main --force
+          git merge --no-edit upstream/main
+          git push origin main
