@@ -20,6 +20,7 @@ ARG GOSUMDB=sum.golang.google.cn
 FROM ${NODE_IMAGE} AS frontend-builder
 
 WORKDIR /app/frontend
+ARG PNPM_VERSION
 
 # Install pnpm with a pinned version and retry to reduce transient npm registry failures.
 RUN set -eux; \
