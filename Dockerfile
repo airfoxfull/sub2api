@@ -10,6 +10,7 @@ ARG NODE_IMAGE=node:24-alpine
 ARG GOLANG_IMAGE=golang:1.26.2-alpine
 ARG ALPINE_IMAGE=alpine:3.21
 ARG POSTGRES_IMAGE=postgres:18-alpine
+ARG PNPM_VERSION=10.33.0
 ARG GOPROXY=https://goproxy.cn,direct
 ARG GOSUMDB=sum.golang.google.cn
 
@@ -20,8 +21,17 @@ FROM ${NODE_IMAGE} AS frontend-builder
 
 WORKDIR /app/frontend
 
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# Install pnpm with a pinned version and retry to reduce transient npm registry failures.
+RUN set -eux; \
+    corepack enable; \
+    for attempt in 1 2 3; do \
+        corepack prepare pnpm@${PNPM_VERSION} --activate && break; \
+        if [ "$attempt" -eq 3 ]; then \
+            echo "failed to activate pnpm@${PNPM_VERSION} after ${attempt} attempts" >&2; \
+            exit 1; \
+        fi; \
+        sleep 5; \
+    done
 
 # Install dependencies first (better caching)
 COPY frontend/package.json frontend/pnpm-lock.yaml ./

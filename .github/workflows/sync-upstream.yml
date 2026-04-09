@@ -1,0 +1,38 @@
+name: Sync Upstream
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Sync main from upstream
+        run: |
+          git remote add upstream https://github.com/Wei-Shaw/sub2api.git
+          git fetch upstream main
+          CURRENT_SHA="$(git rev-parse origin/main)"
+          UPSTREAM_SHA="$(git rev-parse upstream/main)"
+          echo "current=$CURRENT_SHA"
+          echo "upstream=$UPSTREAM_SHA"
+          if [ "$CURRENT_SHA" = "$UPSTREAM_SHA" ]; then
+            echo "Fork already matches upstream main."
+            exit 0
+          fi
+          git checkout main
+          git reset --hard upstream/main
+          git push origin main --force
